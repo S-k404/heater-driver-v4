@@ -1,3 +1,12 @@
+<!-- datasheet:banner -->
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/banner-dark.svg">
+    <img src=".github/assets/banner-light.svg" alt="Heater Driver v4: A 12 V / 100 W through-hole PCB heater driver that can't cook itself: latching over-current and over-temperature shutdown." width="100%">
+  </picture>
+</p>
+<!-- /datasheet:banner -->
+
 # Heater Driver 12 V / 100 W — v4 (All Through-Hole, Runs Cool, OCP + OTP)
 
 Rev 4.0 · 2026-10-17 · KiCad 9.0 project · 2-layer, **54 × 42 mm** · **100 % through-hole parts**
@@ -10,6 +19,24 @@ v4 builds on v3 with three goals:
 Start with **`docs/heater_driver_v4_placement_guide.pdf`**.
 
 ---
+
+<!-- datasheet:figure -->
+## At a glance
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/diagram-dark.svg">
+    <img src=".github/assets/diagram-light.svg" alt="Block diagram: power path with latching protection" width="100%">
+  </picture>
+</p>
+
+| Characteristic | Detail |
+| --- | --- |
+| **Rating** | 12 V, 100 W (8.33 A) into a heater load; 2-layer board, 54 × 42 mm, 100 % through-hole |
+| **Switch** | 1.3 mΩ MOSFET Q1 dissipating about 0.09 W at full load |
+| **Protection** | Latching overcurrent (gate off about 7 µs after a short), latching over-temperature at about 84 °C, 15 A fuse, TVS clamp |
+| **Verification** | Copper current check to IPC-2221, simulation reports and a step-by-step placement guide in `docs/` |
+<!-- /datasheet:figure -->
 
 ## 1. Folder contents
 
@@ -139,3 +166,7 @@ Then work through the test checklist.
 - **Silkscreen designators:** C5, C7, R7, R13, J1 and J2 don't fit visibly on the dense top silkscreen. The placement guide and assembly drawing show every part.
 - **The ~84 °C threshold** is set by R20 (11 k) and depends on how well TH1 touches the shunt/MOSFET copper. Bend it so the bead leans against the RS1 strap.
 - **Simulation scope:** the simulation uses behavioural models for the PC817, TC4427 and LM339. Treat it as a logic and timing check, then run the real tests in the checklist.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
