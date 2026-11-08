@@ -1,0 +1,21 @@
+iheat_on            =  8.123332e+00 from=  6.300000e-03 to=  6.450196e-03
+vgate_on            =  1.168738e+01 from=  6.300000e-03 to=  6.450196e-03
+fault_pu            =  1.113401e-01 at=  7.517454e-03
+ipeak               =  3.678550e+01 at=  8.307334e-03
+t_trip              =  8.308078e-03
+t_gateoff           =  8.307394e-03
+fault_hold          =  1.175990e+01 at=  1.010047e-02
+i_latched           =  1.169791e-07 at=  1.150025e-02
+fault_after         =  1.026473e-01 from=  1.320000e-02 to=  1.390002e-02
+iheat_resume        =  8.132988e+00 at=  1.304544e-02
+ipeak2              =  3.931800e+01 at=  1.501108e-02
+t_gateoff2          =  1.420734e-02
+iavg_short_held     =  4.044743e+00 from=  1.421000e-02 to=  1.579003e-02
+irms_short_held     =  9.32584e+00 from=  1.42100e-02 to=  1.57900e-02
+iheat_final         =  8.123540e+00 at=  1.651692e-02
+fault_final         =  1.032220e-01 from=  1.650000e-02 to=  1.700001e-02
+t_otp               =  2.140879e-02
+t_at_trip           =  8.378389e+01
+i_after_otp         =  1.174048e-07 at=  2.350025e-02
+fault_after_otp     =  1.172947e+01 at=  2.250001e-02
+pq1_on              =  7.842857e-02 from=  6.300000e-03 to=  6.450196e-03

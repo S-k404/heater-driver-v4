@@ -1,0 +1,4 @@
+*.kicad_prl
+*.bak
+*-bak
+.DS_Store

@@ -1,0 +1,143 @@
+* Heater driver v4 - virtual test bench (ngspice)
+* Behavioural models for PC817, TC4427A and LM393 (open collector); VDMOS for IRF3205/2N7000.
+* Scenario: 0-1 ms supply ramp | 2 ms PWM 1 kHz 50 % | 8.3 ms heater short (0.05 ohm) until 10 ms
+*           | 12-13 ms RESET pressed -> normal PWM resumes
+*           | 14-16 ms RESET HELD while a second short is applied 14.2-15.8 ms -> must still trip
+*           | 17-23 ms simulated over-temperature: NTC heated 25 C -> 105 C, must trip at ~84 C and latch
+.param CTR=0.5
+* ---------------- supply, fuse, protection ----------------
+Vsup  vs_raw 0 PWL(0 0 1m 12)
+Rsrc  vs_raw vs_l 20m
+Lsrc  vs_l vin 1u
+Rfuse vin p12 6m
+C1    p12 c1e 100u
+Rc1   c1e 0 0.15
+* ---------------- heater + wiring + short fault ----------------
+Lwire p12 hw 2u
+Rheat hw heat_n 1.44
+Sshort hw heat_n sctl 0 SWSH
+Vsctl sctl 0 PWL(0 0 8.3m 0 8.301m 5 10m 5 10.001m 0 14.2m 0 14.201m 5 15.8m 5 15.801m 0)
+.model SWSH SW(Vt=2.5 Ron=0.05 Roff=1e9)
+D1    heat_n p12 D5822
+.model D5822 D(Is=4e-5 N=1.05 Rs=0.02 Cjo=400p BV=40)
+* ---------------- power stage ----------------
+M1    heat_n gate src src IRFB7430
+.model IRFB7430 VDMOS(Rd=0.6m Rs=0.3m Vto=3.0 Kp=400 Cgdmax=3n Cgdmin=0.5n Cgs=12n Cjo=3n Is=1e-12 Rb=2m)
+Rs1   src 0 10m
+* Kelvin sense: SH_P = src, SH_N = 0
+R5    gate src 10k
+DZ1   src gate DZ15
+.model DZ15 D(BV=15 IBV=5m Rs=2)
+* ---------------- isolated input: PC817 ----------------
+Vpwm  pwm_p pwm_n PULSE(0 3.3 2m 50n 50n 0.5m 1m)
+Rpwmn pwm_n 0 100meg
+R1    pwm_p opto_a 330
+Dled  opto_a opto_a_x DIRLED
+.model DIRLED D(Is=1e-18 N=1.6 Rs=2)
+* transistor: CTR * I_led, 8 us response, saturates against +12 V
+Bctr  ictl 0 V=max(I(Vsense_led),0)*1000
+Rctr  ictl ictlf 8k
+Cctr  ictlf 0 1n
+Vsense_led opto_a_x pwm_n 0
+Bopto p12 opto_e I=CTR*V(ictlf)/1000*(0.5+0.5*tanh((V(p12)-V(opto_e)-0.25)*8))
+Ropsat p12 opto_e 10meg
+R2    opto_e drv_in 1k
+Cs1   opto_e 0 20p
+Cs2   drv_in 0 20p
+Cs3   fault 0 20p
+Cs4   gate 0 10p
+R3    drv_in 0 4.7k
+* ---------------- gate driver TC4427A (A = gate, B = fault LED) ----------------
+Bdla  dla 0 V=12*(0.5+0.5*tanh((V(drv_in)-1.6)*25))
+Rdla  dla dlaf 1k
+Cdla  dlaf 0 40p
+Bouta outa 0 V=V(p12)*(0.5+0.5*tanh((V(dlaf)-6)*5))
+Routa outa drv_out 7
+R4    drv_out gate 10
+Bdlb  dlb 0 V=12*(0.5+0.5*tanh((V(fault)-1.6)*25))
+Routb dlb fled 7
+R15   fled fled_a 2.2k
+D3    fled_a 0 DRED
+.model DRED D(Is=1e-20 N=1.9 Rs=10)
+* ---------------- fault clamp Q2 ----------------
+* 2N7000 as a smooth gate-controlled resistor (Rds(on) ~2 ohm at Vgs>4 V, Vth ~2.1 V)
+Bq2   drv_in 0 I=V(drv_in)/2*(0.5+0.5*tanh((V(fault)-2.6)*4))
+Cq2g  fault 0 25p
+* ---------------- overcurrent comparator U3A ----------------
+R6    p12 vref 100k
+R7    vref 0 1k
+C5    vref 0 1n
+R8    src sh_f 1k
+C6    sh_f 0 4.7n
+* open collector: sinks when V(-)=sh_f > V(+)=vref ; ~1 us response
+Bca   ca 0 V=0.5+0.5*tanh((V(sh_f)-V(vref))*3000)
+Rca   ca caf 1k
+Cca   caf 0 1n
+Bouta3 trip_n 0 I=V(caf)*V(trip_n)/40
+R9    p12 trip_n 100k
+R10   trip_n 0 100k
+C8    trip_n 0 10n
+* ---------------- over-temperature comparator U3C (NTC TH1) ----------------
+.param TAMB=25
+R18   p12 temp 10k
+Bntc  temp 0 I=V(temp)/(10k*exp(3977*(1/(273.15+V(tdeg)) - 1/298.15)))
+* simulated NTC temperature (deg C) as a voltage: 25 C, ramps to 105 C between 17 and 23 ms
+Vtdeg tdeg 0 PWL(0 25 17m 25 23m 105 24m 105)
+R19   p12 tref 100k
+R20   tref 0 11k
+C9    tref 0 100n
+Bcc   cc 0 V=0.5+0.5*tanh((V(tref)-V(temp))*300)
+Rcc   cc ccf 1k
+Ccc   ccf 0 1n
+Boutc3 trip_n 0 I=V(ccf)*V(trip_n)/40
+* ---------------- latch comparator U3B ----------------
+R11   p12 latch_p 100k
+R12   latch_p 0 100k
+R13   fault latch_p 100k
+C7    latch_p 0 47n
+* sinks (FAULT low) when V(-)=trip_n > V(+)=latch_p
+Bcb   cb 0 V=0.5+0.5*tanh((V(trip_n)-V(latch_p))*300)
+Rcb   cb cbf 1k
+Ccb   cbf 0 1n
+Boutb3 fault 0 I=V(cbf)*V(fault)/40
+R14   p12 fault 4.7k
+* RESET push-button SW1: +12V -> RST, R17 22k RST -> TRIP_N (lifts N above latched P)
+Srst  p12 rst rctl 0 SWR
+R17   rst trip_n 22k
+* press 1: 12-13 ms (normal reset).  press 2: held 14-16 ms while a short is applied 14.2-15.8 ms
+Vrctl rctl 0 PWL(0 0 12m 0 12.001m 5 13m 5 13.001m 0 14m 0 14.001m 5 16m 5 16.001m 0)
+.model SWR SW(Vt=2.5 Ron=0.2 Roff=1e9)
+* ---------------- status LED ----------------
+R16   p12 led_st 2.2k
+D4    led_st heat_n DGRN
+.model DGRN D(Is=1e-22 N=2 Rs=10)
+.options method=gear reltol=1e-3 abstol=1e-9 vntol=1e-5 itl4=100
+.tran 0.2u 24m 0 0.5u uic
+.control
+run
+let vgs = v(gate)-v(src)
+let pq1 = i(Lwire)*(v(heat_n)-v(src))
+meas tran Iheat_on   AVG i(Lwire) from=6.30m to=6.45m
+meas tran Vgate_on   AVG vgs from=6.30m to=6.45m
+meas tran fault_pu   MAX v(fault) from=0.05m to=7.9m
+meas tran Ipeak      MAX i(Lwire) from=8.29m to=8.4m
+meas tran t_trip     WHEN v(fault)=6 RISE=1 from=8.2m
+meas tran t_gateoff  WHEN vgs=3 FALL=1 from=8.3m
+meas tran fault_hold MIN v(fault) from=10.1m to=11.9m
+meas tran I_latched  MAX i(Lwire) from=10.2m to=11.9m
+meas tran fault_after AVG v(fault) from=13.2m to=13.9m
+meas tran Iheat_resume MAX i(Lwire) from=13.0m to=13.9m
+meas tran Ipeak2 MAX i(Lwire) from=14.19m to=15.8m
+meas tran t_gateoff2 WHEN vgs=3 FALL=1 from=14.2m
+meas tran Iavg_short_held AVG i(Lwire) from=14.21m to=15.79m
+meas tran Irms_short_held RMS i(Lwire) from=14.21m to=15.79m
+meas tran Iheat_final MAX i(Lwire) from=16.5m to=17m
+meas tran fault_final AVG v(fault) from=16.5m to=17m
+meas tran t_otp WHEN v(fault)=6 RISE=1 from=17m
+meas tran T_at_trip FIND v(tdeg) WHEN v(fault)=6 RISE=1 from=17m
+meas tran I_after_otp MAX i(Lwire) from=22.5m to=24m
+meas tran fault_after_otp MIN v(fault) from=22.5m to=24m
+meas tran Pq1_on AVG pq1 from=6.30m to=6.45m
+wrdata heater_driver_v4_sim.dat v(pwm_p) i(Lwire) vgs v(fault) v(trip_n) v(latch_p) v(sh_f) v(vref) v(heat_n) v(p12) v(tdeg) v(temp) v(tref)
+.endc
+.end
