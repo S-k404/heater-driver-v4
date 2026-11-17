@@ -12997,7 +12997,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Red LED: overcurrent fault latched"
+		(property "Description" "Red LED: fault latched (overcurrent or over-temperature)"
 			(at 254 256.54 90)
 			(effects
 				(font

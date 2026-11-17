@@ -54,7 +54,7 @@ PARTS = {
  'SW1': ('Switch:SW_Push','RESET','Button_Switch_THT:SW_PUSH_6mm','Omron B3F-1000','Fault reset push-button (lifts TRIP_N above LATCH_P)','OCP'),
  'R17': ('Device:R','22k','Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical','Yageo MFR-25FBF52-22K','Reset injection resistor: protection stays active while RESET is held','OCP'),
  'R15': ('Device:R','2.2k','Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical','Yageo MFR-25FBF52-2K2','FAULT LED resistor','OCP'),
- 'D3':  ('Device:LED','RED FAULT','LED_THT:LED_D3.0mm','Kingbright WP7104ID','Red LED: overcurrent fault latched','OCP'),
+ 'D3':  ('Device:LED','RED FAULT','LED_THT:LED_D3.0mm','Kingbright WP7104ID','Red LED: fault latched (overcurrent or over-temperature)','OCP'),
  # --- MECHANICAL ---
  'H1':  ('Mechanical:MountingHole','M3','MountingHole:MountingHole_3.2mm_M3','','Mounting hole','MECH'),
  'H2':  ('Mechanical:MountingHole','M3','MountingHole:MountingHole_3.2mm_M3','','Mounting hole','MECH'),
